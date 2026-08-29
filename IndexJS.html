@@ -1,0 +1,162 @@
+<script>
+  var base64Data = null;
+  var mimeType = null;
+
+  var dropzone = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  var previewWrap = document.getElementById('previewWrap');
+  var previewImg = document.getElementById('previewImg');
+  var resetBtn = document.getElementById('resetBtn');
+  var analyzeBtn = document.getElementById('analyzeBtn');
+  var retryBtn = document.getElementById('retryBtn');
+
+  var emptyState = document.getElementById('emptyState');
+  var loadingState = document.getElementById('loadingState');
+  var errorState = document.getElementById('errorState');
+  var successState = document.getElementById('successState');
+  var errorMsg = document.getElementById('errorMsg');
+
+  dropzone.addEventListener('click', function () { fileInput.click(); });
+  resetBtn.addEventListener('click', resetAll);
+  retryBtn.addEventListener('click', resetAll);
+  analyzeBtn.addEventListener('click', analyze);
+
+  populateSelect('gradeSelect', 1, 6, function (n) { return n + '학년'; }, '학년 선택');
+  populateSelect('classSelect', 1, 15, function (n) { return n + '반'; }, '반 선택');
+  populateSelect('numberSelect', 1, 50, function (n) { return n + '번'; }, '번호 선택');
+
+  /** 1~max까지 옵션을 가진 드롭다운을 채운다. 맨 앞에는 "선택 안 함" 자리를 둔다. */
+  function populateSelect(id, min, max, labelFn, placeholder) {
+    var select = document.getElementById(id);
+    var blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = placeholder;
+    select.appendChild(blank);
+
+    for (var n = min; n <= max; n++) {
+      var opt = document.createElement('option');
+      opt.value = String(n);
+      opt.textContent = labelFn(n);
+      select.appendChild(opt);
+    }
+  }
+
+  fileInput.addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 올려주세요!');
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onloadend = function () {
+      var result = reader.result;
+      previewImg.src = result;
+      base64Data = result.split(',')[1];
+      mimeType = file.type;
+
+      dropzone.style.display = 'none';
+      previewWrap.style.display = 'block';
+      showState('empty');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function resetAll() {
+    base64Data = null;
+    mimeType = null;
+    fileInput.value = '';
+    previewWrap.style.display = 'none';
+    dropzone.style.display = 'flex';
+    showState('empty');
+  }
+
+  function showState(name) {
+    emptyState.style.display = name === 'empty' ? 'flex' : 'none';
+    loadingState.style.display = name === 'loading' ? 'flex' : 'none';
+    errorState.style.display = name === 'error' ? 'flex' : 'none';
+    successState.style.display = name === 'success' ? 'block' : 'none';
+  }
+
+  function analyze() {
+    if (!base64Data) return;
+    showState('loading');
+
+    var gradeValue = document.getElementById('gradeSelect').value;
+    var classValue = document.getElementById('classSelect').value;
+    var numberValue = document.getElementById('numberSelect').value;
+
+    var grade = gradeValue ? gradeValue + '학년' : '';
+    var alias = (classValue && numberValue) ? (classValue + '반 ' + numberValue + '번') : '';
+
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure)
+      .analyzeHandwriting(base64Data, mimeType, alias, grade);
+  }
+
+  function onFailure(err) {
+    errorMsg.textContent = '앗! 글씨를 읽는 중에 문제가 생겼어요: ' + (err && err.message ? err.message : err);
+    showState('error');
+  }
+
+  function onSuccess(result) {
+    renderResult(result);
+    showState('success');
+  }
+
+  function esc(s) {
+    var div = document.createElement('div');
+    div.textContent = s == null ? '' : s;
+    return div.innerHTML;
+  }
+
+  function renderResult(result) {
+    var html = '';
+
+    html += '<div class="praise-box">' +
+      '<div class="praise-title">💚 선생님의 칭찬 한마디</div>' +
+      '<div class="praise-text">' + esc(result.praise) + '</div></div>';
+
+    html += '<div class="section-label">📝 읽어낸 글씨</div>' +
+      '<div class="extracted-box">' + esc(result.extractedText || '글씨를 찾을 수 없었어요.') + '</div>';
+
+    var corrections = result.corrections || [];
+    var recommended = result.recommendedWords || [];
+
+    if (corrections.length === 0) {
+      html += '<div class="section-label">🪄 맞춤법 돋보기 결과</div>';
+      html += '<div class="noerr-box">' +
+        '<div style="font-size:28px;">✨</div>' +
+        '<p style="font-weight:800;color:#1d4ed8;">와! 틀린 곳이 하나도 없어요. 완벽해요!</p>';
+
+      if (recommended.length > 0) {
+        html += '<div style="text-align:left;margin-top:10px;">' +
+          '<div style="font-weight:800;color:#44403c;margin-bottom:4px;font-size:13px;">📚 오늘의 추천 맞춤법 (더 배워봐요)</div>';
+        recommended.forEach(function (w) {
+          html += '<div class="word-card"><b>' + esc(w.word) + '</b> — ' + esc(w.tip) + '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    } else {
+      html += '<div class="section-label">🪄 맞춤법 돋보기 결과 (' + corrections.length + '건)</div>';
+      corrections.forEach(function (c) {
+        html += '<div class="correction-card">' +
+          '<div class="compare-row">' +
+          '<div class="pill-wrong">' + esc(c.original) + '</div>' +
+          '<div style="color:#a8a29e;">→</div>' +
+          '<div class="pill-right">' + esc(c.corrected) + '</div>' +
+          '</div>' +
+          '<div class="reason-box">💡 ' + esc(c.reason) + '</div>' +
+          '</div>';
+      });
+      html += '<p style="font-size:12px;color:#a8a29e;">✅ 이 오류는 자동으로 저장되어, 반 전체 퀴즈를 만드는 데 활용돼요.</p>';
+    }
+
+    html += '<button class="ghost-btn" onclick="resetAll()">🔄 다른 글씨 검사하기</button>';
+
+    successState.innerHTML = html;
+  }
+</script>

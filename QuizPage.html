@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('CSS'); ?>
+</head>
+<body>
+  <div class="wrap">
+    <header class="app-header">
+      <div class="badge-icon">🎯</div>
+      <h1 class="title">맞춤법 돋보기 · 반 전체 퀴즈</h1>
+      <p class="subtitle">우리 반이 자주 틀리는 맞춤법으로 만든 OX퀴즈 · 골든벨이에요!</p>
+    </header>
+
+    <nav class="tabs">
+      <a href="?">✏️ 글씨 검사하기</a>
+      <a href="?page=quiz" class="active">🎯 반 전체 퀴즈</a>
+    </nav>
+
+    <div class="dash-summary" id="dashSummary"></div>
+
+    <div class="card">
+      <div class="panel">
+        <div class="quiz-controls">
+          <button class="btn-ox" id="startOxBtn">⭕❌ OX퀴즈 시작</button>
+          <button class="btn-bell" id="startBellBtn">🔔 골든벨 시작</button>
+          <button class="btn-reload" id="reloadBtn">🔄 새로고침</button>
+        </div>
+
+        <div class="quiz-stage" id="quizStage">
+          <p style="color:#a8a29e;font-weight:700;">위 버튼을 눌러 퀴즈를 시작하세요.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <?!= include('QuizJS'); ?>
+</body>
+</html>

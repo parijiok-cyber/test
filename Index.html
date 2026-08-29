@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('CSS'); ?>
+</head>
+<body>
+  <div class="wrap">
+    <header class="app-header">
+      <div class="badge-icon">🔍</div>
+      <h1 class="title">맞춤법 돋보기</h1>
+      <p class="subtitle">아이가 쓴 글을 사진으로 찍어주세요. 척척박사 선생님이 다정하게 알려줄게요!</p>
+    </header>
+
+    <nav class="tabs">
+      <a href="#" class="active">✏️ 글씨 검사하기</a>
+      <a href="?page=quiz">🎯 반 전체 퀴즈</a>
+    </nav>
+
+    <div class="card">
+      <div class="grid-2">
+        <!-- 왼쪽: 업로드 -->
+        <div class="panel panel-left">
+          <div class="panel-title">📷 사진 올리기</div>
+
+          <div class="field-row">
+            <div>
+              <label class="small-label">학년 (선택)</label>
+              <select id="gradeSelect"></select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label class="small-label">반 (선택)</label>
+              <select id="classSelect"></select>
+            </div>
+            <div>
+              <label class="small-label">번호 (선택)</label>
+              <select id="numberSelect"></select>
+            </div>
+          </div>
+          <p style="font-size:11px;color:#b45309;margin:0 0 10px;">
+            ★ 개인정보 보호: 실명 대신 반·번호로 익명 표시돼요.
+          </p>
+
+          <div id="dropzone" class="dropzone">
+            <div class="dz-icon">⬆️</div>
+            <div class="dz-title">여기를 눌러서 사진을 골라주세요</div>
+            <div class="dz-sub">스마트폰으로 찍은 사진도 괜찮아요!</div>
+          </div>
+
+          <div id="previewWrap" style="display:none;">
+            <div class="preview-box">
+              <img id="previewImg" src="" alt="업로드된 글씨">
+              <button class="close-btn" id="resetBtn">✕</button>
+            </div>
+            <button class="primary-btn" id="analyzeBtn">✨ 글씨 읽고 맞춤법 검사하기</button>
+          </div>
+
+          <input type="file" id="fileInput" accept="image/*" style="display:none;">
+        </div>
+
+        <!-- 오른쪽: 결과 -->
+        <div class="panel" id="resultPanel">
+          <div class="result-empty" id="emptyState">
+            <div style="font-size:40px;opacity:.4;">📖</div>
+            <p style="font-weight:800;font-size:16px;">사진을 올리고 검사 버튼을 누르면<br>이곳에 결과가 나와요!</p>
+          </div>
+
+          <div class="loading-box" id="loadingState" style="display:none;">
+            <div class="spinner"></div>
+            <p style="font-weight:800;color:#ea580c;">선생님이 글씨를 꼼꼼히 읽고 있어요...</p>
+          </div>
+
+          <div class="error-box" id="errorState" style="display:none;">
+            <div style="font-size:36px;">⚠️</div>
+            <p id="errorMsg" style="font-weight:800;color:#dc2626;"></p>
+            <button class="ghost-btn" id="retryBtn" style="width:auto;padding:8px 20px;">다시 시도하기</button>
+          </div>
+
+          <div id="successState" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <?!= include('IndexJS'); ?>
+</body>
+</html>

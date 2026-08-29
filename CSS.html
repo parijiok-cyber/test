@@ -1,0 +1,148 @@
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #fff7ed;
+    color: #292524;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    padding: 20px 16px 48px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  header.app-header { text-align: center; margin-bottom: 28px; }
+  .badge-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 68px; height: 68px; border-radius: 50%;
+    background: #ffedd5; margin-bottom: 12px; font-size: 32px;
+  }
+  h1.title { font-size: 30px; color: #ea580c; margin: 0 0 8px; }
+  p.subtitle { font-size: 15px; color: #9a3412; opacity: .85; margin: 0; font-weight: 600;}
+
+  nav.tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 22px; }
+  nav.tabs a {
+    text-decoration: none; padding: 8px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 700; color: #9a3412; background: #ffedd5;
+  }
+  nav.tabs a.active { background: #ea580c; color: #fff; }
+
+  .card {
+    background: #fff; border-radius: 22px; box-shadow: 0 10px 30px rgba(154,52,18,.08);
+    border: 3px solid #ffedd5; overflow: hidden;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .panel { padding: 22px; }
+  .panel-left { background: rgba(255,247,237,.4); border-right: 3px solid #fff7ed; }
+  @media (max-width: 720px) { .panel-left { border-right: none; border-bottom: 3px solid #fff7ed; } }
+
+  .panel-title { display: flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 800; margin-bottom: 14px; color: #44403c; }
+
+  .field-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .field-row > div { flex: 1; }
+  label.small-label { font-size: 12px; font-weight: 700; color: #78716c; display:block; margin-bottom: 4px; }
+  input[type=text], select {
+    width: 100%; padding: 9px 10px; border-radius: 10px; border: 2px solid #e7e5e4; font-size: 14px;
+    background: #fff; color: #292524; font-family: inherit;
+  }
+
+  .dropzone {
+    min-height: 260px; border: 3px dashed #fed7aa; border-radius: 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: #fff; cursor: pointer; text-align: center; padding: 20px;
+  }
+  .dropzone:hover { background: #fff7ed; }
+  .dz-icon { padding: 14px; background: #ffedd5; border-radius: 50%; font-size: 26px; }
+  .dz-title { font-size: 17px; font-weight: 800; color: #c2410c; }
+  .dz-sub { font-size: 12px; color: #a8a29e; }
+
+  .preview-box { position: relative; min-height: 260px; background: #f5f5f4; border-radius: 16px; border: 2px solid #e7e5e4; overflow: hidden; }
+  .preview-box img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+  .close-btn {
+    position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,.9); border: none; border-radius: 50%;
+    width: 30px; height: 30px; cursor: pointer; font-weight: 700; color: #78716c;
+  }
+
+  button.primary-btn {
+    margin-top: 14px; width: 100%; padding: 14px; background: #f97316; color: #fff; border: none;
+    border-radius: 14px; font-size: 18px; font-weight: 800; cursor: pointer;
+  }
+  button.primary-btn:hover { background: #ea580c; }
+  button.primary-btn:disabled { opacity: .6; cursor: default; }
+
+  button.ghost-btn {
+    width: 100%; padding: 11px; background: #f5f5f4; color: #57534e; border: none;
+    border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 14px;
+  }
+
+  .result-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #a8a29e; min-height: 320px; text-align: center; gap: 10px; }
+
+  .loading-box { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height: 320px; gap: 16px; }
+  .spinner { width: 56px; height: 56px; border: 5px solid #ffedd5; border-top-color: #f97316; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box { min-height: 320px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:#fef2f2; border-radius:16px; padding:20px; text-align:center; }
+
+  .praise-box { background:#dcfce7; border:2px solid #bbf7d0; border-radius:16px; padding:16px; margin-bottom: 16px; }
+  .praise-title { font-weight: 800; color:#166534; margin-bottom:4px; }
+  .praise-text { color:#15803d; font-weight:600; }
+
+  .section-label { display:flex; align-items:center; gap:6px; font-weight:800; margin: 16px 0 8px; color:#44403c; }
+  .extracted-box { background:#fffdf5; border:1px solid #e7e5e4; border-radius:12px; padding:12px; white-space:pre-wrap; font-size:15px; }
+
+  .correction-card { background:#fafaf9; border:1px solid #e7e5e4; border-radius:14px; padding:12px; margin-bottom:10px; }
+  .compare-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap: wrap; }
+  .pill-wrong { flex:1; min-width: 100px; text-align:center; background:#fee2e2; color:#dc2626; font-weight:700; border-radius:10px; padding:7px 10px; text-decoration: line-through; }
+  .pill-right { flex:1; min-width: 100px; text-align:center; background:#dbeafe; color:#1d4ed8; font-weight:700; border-radius:10px; padding:7px 10px; }
+  .reason-box { background:#fff; border:1px solid #f1f1ef; border-radius:10px; padding:8px 10px; font-size:13px; color:#57534e; }
+
+  .noerr-box { background:#eff6ff; border:2px solid #dbeafe; border-radius:16px; padding:18px; text-align:center; }
+  .word-card { background:#fff; border:1px solid #e7e5e4; border-radius:12px; padding:10px 12px; margin-top:8px; text-align:left; }
+  .word-card b { color: #1d4ed8; }
+
+  /* 퀴즈 페이지 */
+  .quiz-header { text-align:center; margin-bottom: 18px; }
+  .quiz-controls { display:flex; gap:10px; justify-content:center; margin-bottom: 20px; flex-wrap: wrap; }
+  .quiz-controls button {
+    padding: 10px 18px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; font-size: 14px;
+  }
+  .btn-ox { background:#3fae7a; color:#fff; }
+  .btn-bell { background:#e8607d; color:#fff; }
+  .btn-reload { background:#e7e5e4; color:#44403c; }
+
+  .quiz-stage {
+    min-height: 360px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 18px; padding: 24px;
+  }
+  .quiz-progress { font-size: 13px; color:#a8a29e; font-weight:700; }
+  .quiz-prompt { font-size: 26px; font-weight: 800; text-align:center; color:#292524; }
+  .quiz-badge { font-size: 12px; background:#ffedd5; color:#c2410c; padding:4px 10px; border-radius:999px; font-weight:700; }
+
+  .ox-options { display:flex; gap: 24px; }
+  .ox-btn {
+    width: 96px; height: 96px; border-radius: 50%; border: none; font-size: 34px; font-weight: 900; color:#fff; cursor:pointer;
+  }
+  .ox-btn.o { background:#3fae7a; }
+  .ox-btn.x { background:#e8607d; }
+
+  .bell-options { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 560px; }
+  .bell-btn {
+    padding: 16px; border-radius: 14px; border: 2px solid #e7e5e4; background:#fff; font-size: 16px; font-weight: 700;
+    cursor: pointer; text-align:center;
+  }
+  .bell-btn:hover { border-color:#f97316; }
+  .bell-btn.correct { background:#dcfce7; border-color:#3fae7a; color:#166534; }
+  .bell-btn.wrong { background:#fee2e2; border-color:#e8607d; color:#dc2626; }
+
+  .feedback-banner { font-size: 15px; font-weight: 700; padding: 10px 16px; border-radius: 12px; }
+  .feedback-banner.correct { background:#dcfce7; color:#166534; }
+  .feedback-banner.wrong { background:#fee2e2; color:#dc2626; }
+
+  .quiz-next-btn {
+    margin-top: 6px; padding: 10px 22px; border-radius: 12px; border:none; background:#292524; color:#fff; font-weight:800; cursor:pointer;
+  }
+
+  .dash-summary { display:flex; gap:14px; justify-content:center; margin-bottom: 18px; flex-wrap: wrap; }
+  .dash-tile { background:#fff; border:2px solid #ffedd5; border-radius:14px; padding:12px 20px; text-align:center; }
+  .dash-tile .num { font-size: 24px; font-weight: 900; color:#ea580c; }
+  .dash-tile .lbl { font-size: 12px; color:#a8a29e; font-weight:700; }
+</style>

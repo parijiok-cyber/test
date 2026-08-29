@@ -1,0 +1,155 @@
+<script>
+  var quizStage = document.getElementById('quizStage');
+  var dashSummary = document.getElementById('dashSummary');
+
+  var state = { mode: null, questions: [], index: 0, score: 0, answered: false };
+
+  document.getElementById('startOxBtn').addEventListener('click', function () { loadQuiz('ox'); });
+  document.getElementById('startBellBtn').addEventListener('click', function () { loadQuiz('bell'); });
+  document.getElementById('reloadBtn').addEventListener('click', loadDashboard);
+
+  loadDashboard();
+
+  function loadDashboard() {
+    google.script.run.withSuccessHandler(function (summary) {
+      var top = summary.top || [];
+      var html = '<div class="dash-tile"><div class="num">' + summary.totalCount + '</div><div class="lbl">누적 오류 건수</div></div>';
+      if (top.length > 0) {
+        html += '<div class="dash-tile"><div class="num">' + top[0].count + '회</div><div class="lbl">최다 오류: ' + esc(top[0].original) + '</div></div>';
+      }
+      dashSummary.innerHTML = html;
+    }).getDashboardSummary();
+  }
+
+  function esc(s) {
+    var div = document.createElement('div');
+    div.textContent = s == null ? '' : s;
+    return div.innerHTML;
+  }
+
+  function loadQuiz(mode) {
+    quizStage.innerHTML = '<div class="spinner"></div>';
+    state = { mode: mode, questions: [], index: 0, score: 0, answered: false };
+
+    var call = google.script.run.withSuccessHandler(function (data) {
+      if (!data.questions || data.questions.length === 0) {
+        quizStage.innerHTML = '<p style="font-weight:700;color:#a8a29e;">' + esc(data.message || '문제를 만들 데이터가 부족해요.') + '</p>';
+        return;
+      }
+      state.questions = data.questions;
+      renderQuestion();
+    }).withFailureHandler(function (err) {
+      quizStage.innerHTML = '<p style="font-weight:700;color:#dc2626;">문제를 불러오지 못했어요: ' + esc(err.message || err) + '</p>';
+    });
+
+    if (mode === 'ox') {
+      call.generateOXQuiz(8);
+    } else {
+      call.generateGoldenBellQuiz(8);
+    }
+  }
+
+  function renderQuestion() {
+    state.answered = false;
+    var q = state.questions[state.index];
+    var total = state.questions.length;
+    var progress = '<div class="quiz-progress">문제 ' + (state.index + 1) + ' / ' + total + ' · 맞힌 개수 ' + state.score + '</div>';
+
+    if (state.mode === 'ox') {
+      quizStage.innerHTML =
+        progress +
+        '<div class="quiz-badge">' + esc(q.errorType || '맞춤법') + '</div>' +
+        '<div class="quiz-prompt">' + esc(q.prompt) + '</div>' +
+        '<div class="ox-options">' +
+        '<button class="ox-btn o" id="oBtn">O</button>' +
+        '<button class="ox-btn x" id="xBtn">X</button>' +
+        '</div>' +
+        '<div id="feedbackArea"></div>';
+
+      document.getElementById('oBtn').addEventListener('click', function () { answerOX('O'); });
+      document.getElementById('xBtn').addEventListener('click', function () { answerOX('X'); });
+    } else {
+      var optionsHtml = q.options.map(function (opt, i) {
+        return '<button class="bell-btn" data-opt="' + i + '">' + esc(opt) + '</button>';
+      }).join('');
+
+      quizStage.innerHTML =
+        progress +
+        '<div class="quiz-prompt" style="font-size:20px;">' + esc(q.question) + '</div>' +
+        '<div class="bell-options">' + optionsHtml + '</div>' +
+        '<div id="feedbackArea"></div>';
+
+      Array.prototype.forEach.call(document.querySelectorAll('.bell-btn'), function (btn) {
+        btn.addEventListener('click', function () { answerBell(btn); });
+      });
+    }
+  }
+
+  function answerOX(choice) {
+    if (state.answered) return;
+    state.answered = true;
+    var q = state.questions[state.index];
+    var correct = choice === q.answer;
+    if (correct) state.score++;
+
+    var feedback = document.getElementById('feedbackArea');
+    feedback.innerHTML =
+      '<div class="feedback-banner ' + (correct ? 'correct' : 'wrong') + '">' +
+      (correct ? '정답이에요! 🎉' : '아쉬워요, 정답은 ' + q.answer + '예요.') +
+      '</div>' +
+      '<p style="font-size:13px;color:#78716c;max-width:420px;text-align:center;margin:10px auto;">💡 ' + esc(q.explanation) + '</p>' +
+      nextButtonHtml();
+
+    bindNextButton();
+  }
+
+  function answerBell(btn) {
+    if (state.answered) return;
+    state.answered = true;
+    var q = state.questions[state.index];
+    var chosen = btn.textContent;
+    var correct = chosen === q.answer;
+    if (correct) state.score++;
+
+    Array.prototype.forEach.call(document.querySelectorAll('.bell-btn'), function (b) {
+      if (b.textContent === q.answer) b.classList.add('correct');
+      else if (b === btn) b.classList.add('wrong');
+      b.disabled = true;
+    });
+
+    var feedback = document.getElementById('feedbackArea');
+    feedback.innerHTML =
+      '<div class="feedback-banner ' + (correct ? 'correct' : 'wrong') + '" style="margin-top:12px;">' +
+      (correct ? '정답이에요! 🎉' : '아쉬워요, 정답은 "' + esc(q.answer) + '"예요.') +
+      '</div>' +
+      (q.explanation ? '<p style="font-size:13px;color:#78716c;max-width:420px;text-align:center;margin:10px auto;">💡 ' + esc(q.explanation) + '</p>' : '') +
+      nextButtonHtml();
+
+    bindNextButton();
+  }
+
+  function nextButtonHtml() {
+    var isLast = state.index >= state.questions.length - 1;
+    return '<button class="quiz-next-btn" id="nextBtn">' + (isLast ? '결과 보기' : '다음 문제 →') + '</button>';
+  }
+
+  function bindNextButton() {
+    document.getElementById('nextBtn').addEventListener('click', function () {
+      if (state.index >= state.questions.length - 1) {
+        showFinalScore();
+      } else {
+        state.index++;
+        renderQuestion();
+      }
+    });
+  }
+
+  function showFinalScore() {
+    quizStage.innerHTML =
+      '<div style="font-size:40px;">🏆</div>' +
+      '<div class="quiz-prompt">' + state.score + ' / ' + state.questions.length + ' 문제를 맞혔어요!</div>' +
+      '<button class="quiz-next-btn" id="restartBtn">다시 하기</button>';
+    document.getElementById('restartBtn').addEventListener('click', function () { loadQuiz(state.mode); });
+    loadDashboard();
+  }
+</script>
